@@ -1,0 +1,3 @@
+[submodule "python-afl"]
+    path = python-afl
+    url = https://github.com/jwilk/python-afl

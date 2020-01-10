@@ -1,0 +1,20 @@
+{
+  "name": "frida-proxy",
+  "version": "1.0.0",
+  "description": "Frida based AFL proxy to remote fuzzing",
+  "main": "fuzz/index.js",
+  "files": [
+    "fuzz/*.js"
+  ],
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "frida-compile": "^9.1.0"
+  }
+}

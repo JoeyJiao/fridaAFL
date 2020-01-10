@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./node_modules/.bin/frida-compile $@ -o proxy.js
