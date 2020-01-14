@@ -27,6 +27,7 @@ Refer to `examples/test_aarch64.js`.
 
 # TODO
 + Support remote fuzzer with fork server
-+ Write fuzzer trace_bits to afl-fuzz on host
-+ Avoid fuzzing frida proxy code
++ ~~Write fuzzer trace_bits to afl-fuzz on host~~
++ ~~Avoid fuzzing frida proxy code~~
 + Performance optimization
++ Kill target binary process when timeout
