@@ -26,9 +26,6 @@ device = None
 script = None
 args = None
 
-TERM_HOME = "\x1b[H"
-TERM_CLEAR = TERM_HOME + "\x1b[2J"
-
 TRACE_BITS = "trace_bits"
 
 try:
@@ -95,28 +92,30 @@ def main():
     with open(args.l) as f:
         code = f.read()
 
-    if args.U:
-        device = frida.get_usb_device()
-        if args.s:
-            pid = device.spawn(args.t, env=env)
-            session = device.attach(pid)
+    try:
+        if args.U:
+            device = frida.get_usb_device()
+            if args.s:
+                pid = device.spawn(args.t, env=env)
+                session = device.attach(pid)
+            else:
+                session = device.attach(app_name)
         else:
-            session = device.attach(app_name)
-    else:
-        if args.s:
-            pid = frida.spawn(args.t, stdio='pipe', env=env)
-            session = frida.attach(pid)
-        else:
-            session = frida.attach(app_name)
+            if args.s:
+                pid = frida.spawn(args.t, stdio='pipe', env=env)
+                session = frida.attach(pid)
+            else:
+                session = frida.attach(app_name)
+    except Exception as e:
+        print(e)
+        os._exit(0)
 
     script = session.create_script(code, runtime='v8')
     script.on('message', on_message)
     script.load()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-#    print(TERM_CLEAR, end="")
 
-#    afl.init()
     try:
         script.exports.fuzzer()
     except frida.InvalidOperationError as e:
