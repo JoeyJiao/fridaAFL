@@ -1,4 +1,8 @@
 var utils = require("./utils.js");
+var config = require("./config.js");
+
+exports.config = config;
+exports.utils = utils;
 
 exports.fuzz_one_input = null;
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import afl
-afl.init()
-import frida
+afl.init(remote_trace=True)
 import argparse
 import sys
 import os
@@ -15,6 +14,7 @@ except:
         from env import env
     except:
         env = None
+import frida
 
 
 DESCR = """Frida AFL
@@ -29,6 +29,8 @@ args = None
 TERM_HOME = "\x1b[H"
 TERM_CLEAR = TERM_HOME + "\x1b[2J"
 
+TRACE_BITS = "trace_bits"
+
 try:
     stdin = sys.stdin.buffer
 except:
@@ -38,6 +40,8 @@ def on_message(message, data):
     global args, device, script, session, pid, stdin
     msg = message['payload']
     if msg['event'] == 'input':
+        if os.path.exists(TRACE_BITS):
+            os.remove(TRACE_BITS)
         buf = stdin.read()
         if len(buf) == 0:
             return
@@ -45,8 +49,10 @@ def on_message(message, data):
             "type": "input",
             "buf": buf.hex(),
         })
+    elif msg['event'] == 'trace_bits':
+        with open(TRACE_BITS, "wb") as f:
+            f.write(data)
     elif msg['event'] == 'done':
-        print('done')
         os._exit(0)
 
 def signal_handler(sig, frame):
@@ -115,7 +121,7 @@ def main():
     except frida.InvalidOperationError as e:
         raise e
 
-    sys.stdin.read()
+#    sys.stdin.read()
 
 
 if __name__ == '__main__':
