@@ -113,6 +113,7 @@ def main():
     script.on('message', on_message)
     script.load()
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 #    print(TERM_CLEAR, end="")
 
 #    afl.init()
