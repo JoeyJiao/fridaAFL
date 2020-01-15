@@ -3,3 +3,4 @@ package-lock.json
 proxy.js
 __pycache__
 *.swp
+afl_socket

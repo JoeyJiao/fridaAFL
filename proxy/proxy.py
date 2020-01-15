@@ -6,7 +6,15 @@ import argparse
 import sys
 import os
 import signal
-from time import sleep
+import socket
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+AFL_SOCKET = 'afl_socket'
+try:
+    sock.connect(AFL_SOCKET)
+except socket.error:
+    print(sys.stderr)
+    sys.exit(1)
+
 try:
     from proxy.env import env
 except:
@@ -26,8 +34,6 @@ device = None
 script = None
 args = None
 
-TRACE_BITS = "trace_bits"
-
 try:
     stdin = sys.stdin.buffer
 except:
@@ -37,8 +43,6 @@ def on_message(message, data):
     global args, device, script, session, pid, stdin
     msg = message['payload']
     if msg['event'] == 'input':
-        if os.path.exists(TRACE_BITS):
-            os.remove(TRACE_BITS)
         buf = stdin.read()
         if len(buf) == 0:
             return
@@ -47,8 +51,8 @@ def on_message(message, data):
             "buf": buf.hex(),
         })
     elif msg['event'] == 'trace_bits':
-        with open(TRACE_BITS, "wb") as f:
-            f.write(data)
+        sock.sendall(data)
+        sock.close()
     elif msg['event'] == 'done':
         os._exit(0)
 
