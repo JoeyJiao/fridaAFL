@@ -12,9 +12,9 @@ server_address = str(os.getppid())
 mypid = os.getpid()
 try:
     sock.connect(server_address)
-except socket.error:
-    print(sys.stderr)
-    sys.exit(1)
+except FileNotFoundError:
+    print("Instrument won't be sent to AFL")
+    pass
 
 try:
     from proxy.env import env
@@ -44,7 +44,11 @@ def on_message(message, data):
     global args, device, script, session, pid, stdin
     msg = message['payload']
     if msg['event'] == 'input':
-        buf = stdin.read()
+        if len(args.input) > 0:
+            with open(args.input[0], 'rb') as f:
+                buf = f.read()
+        else:
+            buf = stdin.read()
         if len(buf) == 0:
             return
         script.post({
