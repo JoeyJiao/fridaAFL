@@ -8,9 +8,10 @@ import os
 import signal
 import socket
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-AFL_SOCKET = 'afl_socket'
+server_address = str(os.getppid())
+mypid = os.getpid()
 try:
-    sock.connect(AFL_SOCKET)
+    sock.connect(server_address)
 except socket.error:
     print(sys.stderr)
     sys.exit(1)
@@ -51,14 +52,23 @@ def on_message(message, data):
             "buf": buf.hex(),
         })
     elif msg['event'] == 'trace_bits':
-        sock.sendall(data)
-        sock.close()
+        try:
+            sock.sendall(data)
+            sock.close()
+        except Exception as e:
+            print("Sock send error: ", e)
+            pass
     elif msg['event'] == 'done':
         os._exit(0)
 
 def signal_handler(sig, frame):
-    global args, device, script, session, pid
-    print('>Catch SIGINT, exiting...')
+    global args, device, script, session, pid, server_address, mypid
+    print('>Catch signal %s, exiting...' % sig)
+    try:
+        os.unlink(server_address)
+    except OSError:
+        if os.path.exists(server_address):
+            raise
     if args.s and not args.U:
         print('>Killing', pid)
         os.kill(pid, signal.SIGKILL)
@@ -73,7 +83,7 @@ def signal_handler(sig, frame):
         session.detach()
     except:
         pass
-    os._exit(0)
+    os.kill(mypid, signal.SIGKILL)
 
 
 def main():
