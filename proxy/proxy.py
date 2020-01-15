@@ -76,8 +76,8 @@ def main():
     global args, device, script, session, pid
     opt = argparse.ArgumentParser(description=DESCR, formatter_class=argparse.RawTextHelpFormatter)
     opt.add_argument('-l', action='store', default='proxy/proxy.js', help='Script filename')
-    opt.add_argument('-U', action='store_true', default=True, help='Connect to USB')
-    opt.add_argument('-s', action='store_true', default=True, help='Spawn instead of attach')
+    opt.add_argument('-U', action='store_true', default=False, help='Connect to USB')
+    opt.add_argument('-s', action='store_true', default=False, help='Spawn instead of attach')
     opt.add_argument('-t', action='store', help='file to store target program/pid (and arguments if spwaning)')
     opt.add_argument('input', nargs=argparse.REMAINDER, help='Input corpus file')
     args = opt.parse_args()
