@@ -19,7 +19,7 @@ cd -
 
 # Run
 ```bash
-./python-afl/py-afl-fuzz -m none -i input -o findings -- ./proxy/proxy.py -t /data/local/tmp/fuzz-mm-parser
+./run.sh -b "python3 ./proxy/proxy.py -U -s -t /data/local/tmp/fuzz-mm-parser" -i input -o findings -m none -j 1
 ```
 
 # Write a new test case
@@ -27,7 +27,5 @@ Refer to `examples/test_aarch64.js`.
 
 # TODO
 + Support remote fuzzer with fork server
-+ ~~Write fuzzer trace_bits to afl-fuzz on host~~
-+ ~~Avoid fuzzing frida proxy code~~
 + Performance optimization
-+ Kill target binary process when timeout
++ FIX many target binary created while requested only one
