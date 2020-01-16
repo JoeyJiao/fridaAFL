@@ -32,7 +32,7 @@ int write2stdin(char* buf, ssize_t len) {
 	write(0, buf, len);
 	fflush(0);
 
-  lseek(0, 0, SEEK_SET);
+	lseek(0, 0, SEEK_SET);
 
 	return 0;
 }

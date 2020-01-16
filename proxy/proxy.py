@@ -31,7 +31,11 @@ except:
 
 def on_message(message, data):
     global args, device, script, session, pid, stdin
-    msg = message['payload']
+    try:
+        msg = message['payload']
+    except:
+        print(message)
+        raise
     if msg['event'] == 'input':
         if len(args.input) > 0:
             with open(args.input[0], 'rb') as f:
@@ -49,7 +53,7 @@ def on_message(message, data):
             sock.sendall(data)
             sock.close()
         except Exception as e:
-            print("Sock send error: ", e)
+            print("Sock send error for trace_bits: ", e)
             pass
     elif msg['event'] == 'done':
         os._exit(0)
@@ -88,7 +92,7 @@ def signal_handler(sig, frame):
 
 
 def main():
-    global args, device, script, session, pid, sock, code
+    global args, device, script, session, pid, sock, code, app_name
     opt = argparse.ArgumentParser(description=DESCR, formatter_class=argparse.RawTextHelpFormatter)
     opt.add_argument('-l', action='store', default='proxy/proxy.js', help='Script filename')
     opt.add_argument('-U', action='store_true', default=False, help='Connect to USB')
@@ -111,7 +115,7 @@ def main():
     fuzz()
 
 def fuzz():
-    global args, device, script, session, pid, sock, code
+    global args, device, script, session, pid, sock, code, app_name
     import frida
     try:
         if args.U:
