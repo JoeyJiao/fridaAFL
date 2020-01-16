@@ -88,8 +88,7 @@ def signal_handler(sig, frame):
         except Exception as e:
             print("Sock send timeout error: ", e)
             pass
-    os.kill(os.getpid(), signal.SIGKILL)
-
+    os._exit(0)
 
 def main():
     global args, device, script, session, pid, sock, code, app_name
