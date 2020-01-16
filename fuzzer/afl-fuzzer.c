@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -9,6 +10,7 @@
 #include <stdint.h>
 #include <sys/ipc.h>
 #include <sys/time.h>
+#include <sched.h>
 #include "android-ashmem.h"
 
 #define MAP_SIZE_POW2 16
@@ -176,4 +178,16 @@ void setup_shm(void) {
   trace_bits = shmat(shm_id, NULL, 0);
 
   if (!trace_bits) PFATAL("shmat() failed");
+}
+
+void set_affinity(int cpu) {
+  pid_t pid = getpid();
+  cpu_set_t c;
+
+  CPU_ZERO(&c);
+  CPU_SET(cpu, &c);
+
+  if (sched_setaffinity(pid, sizeof(cpu_set_t), &c) == -1) {
+    printf("%s: sched_setaffinity failed\n", __func__);
+  }
 }

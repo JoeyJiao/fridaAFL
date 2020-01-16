@@ -6,8 +6,11 @@ var func_handle_quit_stdin = new NativeFunction(DebugSymbol.fromName("_Z16quit_w
 var func_handle_setup_shm = new NativeFunction(DebugSymbol.fromName("setup_shm").address, 'void', [], { traps: 'all' });
 var func_handle_afl_manual_init = new NativeFunction(DebugSymbol.fromName("__afl_manual_init").address, 'void', [], { traps: 'all' });
 var func_handle = new NativeFunction(DebugSymbol.fromName("main").address, "int", ['int', 'pointer'], { traps: 'all' });
+var func_handle_set_affinity = new NativeFunction(DebugSymbol.fromName("set_affinity").address, "void", ['int'], { traps: 'all' });
 
 fuzz.fuzz_one_input = function (/* Uint8Array */ payload) {
+  func_handle_set_affinity(7);
+
   var payload_mem = Memory.alloc(payload.length);
 
   Memory.writeByteArray(payload_mem, payload, payload.length);
