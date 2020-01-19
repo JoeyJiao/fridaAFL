@@ -8,13 +8,25 @@ var func_handle_afl_manual_init = new NativeFunction(DebugSymbol.fromName("__afl
 var func_handle = new NativeFunction(DebugSymbol.fromName("_Z12dispatch_msgv").address, "void", [], { traps: 'all' });
 var func_handle_set_affinity = new NativeFunction(DebugSymbol.fromName("set_affinity").address, "void", ['int'], { traps: 'all' });
 
+var target = "qcrild";
+
 fuzz.fuzz_one_input = function (/* Uint8Array */ payload) {
 
   func_handle_set_affinity(7);
 
-  var payload_mem = Memory.alloc(payload.length);
+  Module.enumerateSymbolsSync(target)
+    .forEach(function(s){
+      if (s.name === "__afl_area_ptr") {
+        var trace_bits = s.address.readPointer();
+	var p = trace_bits;
+	for(var i=0; i < fuzz.config.MAP_SIZE / 16; i++) {
+	  p.writeByteArray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8]);
+	  p = p.add(16);
+	}
+      }
+   });
 
-  Memory.writeByteArray(payload_mem, payload, payload.length);
+  var payload_mem = payload.buffer.unwrap();
 
   func_handle_setup_shm();
 
@@ -27,7 +39,7 @@ fuzz.fuzz_one_input = function (/* Uint8Array */ payload) {
 
   func_handle();
 
-  Module.enumerateSymbolsSync("qcrild")
+  Module.enumerateSymbolsSync(target)
     .forEach(function(s){
       if (s.name === "__afl_area_ptr") {
         var trace_bits = s.address.readPointer();
