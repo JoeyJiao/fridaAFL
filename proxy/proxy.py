@@ -30,7 +30,10 @@ except:
     stdin = sys.stdin
 
 def on_message(message, data):
-    global args, device, script, session, pid, stdin
+    global args, device, script, session, pid, stdin, sock
+    if message['type'] == 'error':
+        print(message)
+        raise
     try:
         msg = message['payload']
     except:
@@ -59,9 +62,9 @@ def on_message(message, data):
         os._exit(0)
 
 def signal_handler(sig, frame):
-    global args, device, script, session, pid, server_address
+    global args, device, script, session, pid, server_address, sock
     print('>Catch signal %s, exiting...' % sig)
-    if sig == 15:
+    if sig == 15 or sig == 2:
         try:
             os.unlink(server_address)
         except OSError:
@@ -90,31 +93,9 @@ def signal_handler(sig, frame):
             pass
     os._exit(0)
 
-def main():
-    global args, device, script, session, pid, sock, code, app_name
-    opt = argparse.ArgumentParser(description=DESCR, formatter_class=argparse.RawTextHelpFormatter)
-    opt.add_argument('-l', action='store', default='proxy/proxy.js', help='Script filename')
-    opt.add_argument('-U', action='store_true', default=False, help='Connect to USB')
-    opt.add_argument('-s', action='store_true', default=False, help='Spawn instead of attach')
-    opt.add_argument('-t', action='store', help='file to store target program/pid (and arguments if spwaning)')
-    opt.add_argument('input', nargs=argparse.REMAINDER, help='Input corpus file')
-    args = opt.parse_args()
-
-    app_name = args.t
-    try:
-        app_name = int(app_name)
-        pid = app_name
-    except:
-        pass
-
-    with open(args.l) as f:
-        code = f.read()
-
-    afl.init(remote_trace=True)
-    fuzz()
-
 def fuzz():
-    global args, device, script, session, pid, sock, code, app_name
+    global args, device, script, session, pid, sock, code, app_name, server_address
+    afl.init(remote_trace=True)
     import frida
     try:
         if args.U:
@@ -154,9 +135,38 @@ def fuzz():
     except frida.InvalidOperationError as e:
         raise e
 
-#    sys.stdin.read()
+
+def main():
+    global args, device, script, session, pid, sock, code, app_name
+    opt = argparse.ArgumentParser(description=DESCR, formatter_class=argparse.RawTextHelpFormatter)
+    opt.add_argument('-l', action='store', default='proxy/proxy.js', help='Script filename')
+    opt.add_argument('-U', action='store_true', default=False, help='Connect to USB')
+    opt.add_argument('-s', action='store_true', default=False, help='Spawn instead of attach')
+    opt.add_argument('-t', action='store', help='file to store target program/pid (and arguments if spwaning)')
+    opt.add_argument('input', nargs=argparse.REMAINDER, help='Input corpus file')
+    args = opt.parse_args()
+
+    app_name = args.t
+    try:
+        app_name = int(app_name)
+        pid = app_name
+    except:
+        pass
+
+    with open(args.l) as f:
+        code = f.read()
+
+    fuzz()
+
+    sys.stdin.read()
+#    while afl.loop(1000, remote_trace=True):
+#        fuzz()
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        raise
 
