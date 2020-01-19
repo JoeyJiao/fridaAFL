@@ -165,15 +165,19 @@ void remove_shm(void) {
 void setup_shm(void) {
   u8* shm_str;
 
-  shm_id = shmget(IPC_PRIVATE, MAP_SIZE, IPC_CREAT | IPC_EXCL | 0600);
-  if (shm_id < 0) PFATAL("shmget() failed");
-  atexit(remove_shm);
+  if (!getenv(SHM_ENV_VAR)) {
+    shm_id = shmget(IPC_PRIVATE, MAP_SIZE, IPC_CREAT | IPC_EXCL | 0600);
+    if (shm_id < 0) PFATAL("shmget() failed");
+    atexit(remove_shm);
 
-  shm_str = alloc_printf("%d", shm_id);
+    shm_str = alloc_printf("%d", shm_id);
+    if (!getenv("AFL_DUMB_MODE")) setenv(SHM_ENV_VAR, shm_str, 1);
 
-  if (!getenv("AFL_DUMB_MODE")) setenv(SHM_ENV_VAR, shm_str, 1);
-
-  ck_free(shm_str);
+    ck_free(shm_str);
+  } else {
+    shm_str = getenv(SHM_ENV_VAR);
+    shm_id = atoi(shm_str);
+  }
 
   trace_bits = shmat(shm_id, NULL, 0);
 
