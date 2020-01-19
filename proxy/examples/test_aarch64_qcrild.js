@@ -10,19 +10,22 @@ var func_handle_set_affinity = new NativeFunction(DebugSymbol.fromName("set_affi
 
 var target = "qcrild";
 
+
+var zeroed_bits = new Uint8Array(fuzz.config.MAP_SIZE);
+
 fuzz.fuzz_one_input = function (/* Uint8Array */ payload) {
 
-  func_handle_set_affinity(7);
+  try {
+    func_handle_set_affinity(7);
+  } catch(err) {
+    console.log("set affinity failed");
+  }
 
   Module.enumerateSymbolsSync(target)
     .forEach(function(s){
       if (s.name === "__afl_area_ptr") {
         var trace_bits = s.address.readPointer();
-	var p = trace_bits;
-	for(var i=0; i < fuzz.config.MAP_SIZE / 16; i++) {
-	  p.writeByteArray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8]);
-	  p = p.add(16);
-	}
+	Memory.writeByteArray(trace_bits, zeroed_bits);
       }
    });
 
@@ -37,7 +40,26 @@ fuzz.fuzz_one_input = function (/* Uint8Array */ payload) {
     return;
   }
 
-  func_handle();
+  try {
+    func_handle();
+  } catch (err) {
+    if (err.type !== undefined) {
+      send({
+        "event": "crash",
+	"err": err
+      });
+    } else if (err.$handle !== undefined) {
+      send({
+        "event": "exception",
+	"err": err
+      });
+    } else {
+      send({
+        "event": "other",
+	"err": err
+      });
+    }
+  }
 
   Module.enumerateSymbolsSync(target)
     .forEach(function(s){

@@ -60,16 +60,22 @@ def on_message(message, data):
             pass
     elif msg['event'] == 'done':
         os._exit(0)
+    elif msg['event'] in ['crash', 'exception', 'other']:
+        if msg['err']['type'] == 'abort':
+          os._exit(6)
+        else:
+          print(msg)
+          os._exit(11)
 
 def signal_handler(sig, frame):
     global args, device, script, session, pid, server_address, sock
     print('>Catch signal %s, exiting...' % sig)
-    if sig == 15 or sig == 2:
-        try:
-            os.unlink(server_address)
-        except OSError:
-            if os.path.exists(server_address):
-                raise
+#    if sig == 15 or sig == 2:
+#        try:
+#            os.unlink(server_address)
+#        except OSError:
+#            if os.path.exists(server_address):
+#                raise
     if args.s and not args.U:
         print('>Killing', pid)
         os.kill(pid, signal.SIGKILL)
@@ -92,6 +98,16 @@ def signal_handler(sig, frame):
             print("Sock send timeout error: ", e)
             pass
     os._exit(0)
+
+def establish_sock():
+    global sock, server_address
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server_address = str(os.getppid())
+    try:
+        sock.connect(server_address)
+    except FileNotFoundError:
+        print("Instrument won't be sent to AFL")
+        pass
 
 def fuzz():
     global args, device, script, session, pid, sock, code, app_name, server_address
@@ -122,18 +138,15 @@ def fuzz():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGALRM, signal_handler)
 
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    server_address = str(os.getppid())
-    try:
-        sock.connect(server_address)
-    except FileNotFoundError:
-        print("Instrument won't be sent to AFL")
-        pass
+    establish_sock()
 
     try:
         script.exports.fuzzer()
     except frida.InvalidOperationError as e:
         raise e
+    except frida.core.RPCException as e:
+        print(e)
+        os._exit(2)
 
 
 def main():
