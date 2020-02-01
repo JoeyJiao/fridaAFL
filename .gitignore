@@ -4,3 +4,4 @@ proxy.js
 __pycache__
 *.swp
 afl_socket
+socket/*
