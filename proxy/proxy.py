@@ -70,34 +70,19 @@ def on_message(message, data):
 def signal_handler(sig, frame):
     global args, device, script, session, pid, server_address, sock
     print('>Catch signal %s, exiting...' % sig)
-#    if sig == 15 or sig == 2:
-#        try:
-#            os.unlink(server_address)
-#        except OSError:
-#            if os.path.exists(server_address):
-#                raise
     if args.s and not args.U:
-        print('>Killing', pid)
         os.kill(pid, signal.SIGKILL)
     elif args.s and args.U:
         try:
             device.kill(pid)
         except:
-            print('>Unable to find process :%s' % pid)
             pass
     try:
         script.unload()
         session.detach()
     except:
         pass
-    if sig == 14:
-        try:
-            sock.sendall(b'0'* MAP_SIZE)
-            sock.close()
-        except Exception as e:
-            print("Sock send timeout error: ", e)
-            pass
-    os._exit(0)
+    os._exit(sig)
 
 def establish_sock():
     global sock, server_address
@@ -142,11 +127,9 @@ def fuzz():
 
     try:
         script.exports.fuzzer()
-    except frida.InvalidOperationError as e:
-        raise e
-    except frida.core.RPCException as e:
+    except (frida.core.RPCException, frida.InvalidOperationError) as e:
         print(e)
-        os._exit(2)
+        os._exit(1)
 
 
 def main():
