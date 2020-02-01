@@ -82,6 +82,8 @@ def signal_handler(sig, frame):
         session.detach()
     except:
         pass
+    if sig == 15:
+        os._exit(0)
     os._exit(sig)
 
 def establish_sock():
