@@ -89,7 +89,7 @@ def signal_handler(sig, frame):
 def establish_sock():
     global sock, server_address
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    server_address = str(os.getppid())
+    server_address = 'socket' + os.sep + str(os.getppid())
     try:
         sock.connect(server_address)
     except FileNotFoundError:
