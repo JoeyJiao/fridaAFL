@@ -69,7 +69,7 @@ def on_message(message, data):
 
 def signal_handler(sig, frame):
     global args, device, script, session, pid, server_address, sock
-    print('>Catch signal %s, exiting...' % sig)
+    print('Catch signal %s' % sig)
     if args.s and not args.U:
         os.kill(pid, signal.SIGKILL)
     elif args.s and args.U:
@@ -82,7 +82,7 @@ def signal_handler(sig, frame):
         session.detach()
     except:
         pass
-    if sig == 15:
+    if sig == 15: # SIGTERM
         os._exit(0)
     os._exit(sig)
 
@@ -93,12 +93,10 @@ def establish_sock():
     try:
         sock.connect(server_address)
     except FileNotFoundError:
-        print("Instrument won't be sent to AFL")
-        pass
+        raise
 
 def fuzz():
-    global args, device, script, session, pid, sock, code, app_name, server_address
-    afl.init(remote_trace=True)
+    global args, device, script, session, pid, sock, code, app_name, server_address, env
     import frida
     try:
         if args.U:
@@ -121,6 +119,7 @@ def fuzz():
     script = session.create_script(code, runtime='v8')
     script.on('message', on_message)
     script.load()
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGALRM, signal_handler)
@@ -131,7 +130,7 @@ def fuzz():
         script.exports.fuzzer()
     except (frida.core.RPCException, frida.InvalidOperationError) as e:
         print(e)
-        os._exit(1)
+        os._exit(0)
 
 
 def main():
@@ -154,6 +153,7 @@ def main():
     with open(args.l) as f:
         code = f.read()
 
+    afl.init(remote_trace=True)
     fuzz()
 
     sys.stdin.read()
